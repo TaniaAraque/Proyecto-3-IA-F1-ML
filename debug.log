@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/taniajulietharaqueduenas/Desktop/Intro a IA/Proyecto 3/F1-Q-Learning/main.py", line 1, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
