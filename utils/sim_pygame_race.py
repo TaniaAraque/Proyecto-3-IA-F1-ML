@@ -29,12 +29,13 @@ class F1RaceSim:
         self.track = pygame.image.load("assets/track.png")
         self.track = pygame.transform.scale(self.track, (900, 600))
 
+        # Cargar y escalar autos - rival ligeramente más grande
         self.car_norris = pygame.image.load("assets/car_norris.png")
         self.car_norris = pygame.transform.scale(self.car_norris, (70, 40))
         self.car_norris.set_colorkey((0, 0, 0))  # Hacer transparente el negro
 
         self.car_rival = pygame.image.load("assets/car_rival.png")
-        self.car_rival = pygame.transform.scale(self.car_rival, (70, 40))
+        self.car_rival = pygame.transform.scale(self.car_rival, (100, 58))
         self.car_rival.set_colorkey((0, 0, 0))  # Hacer transparente el negro
 
         # Definir trayectoria del circuito (ajusta estos puntos según tu imagen)
@@ -48,67 +49,67 @@ class F1RaceSim:
         """
         path = [
             (406, 225),
-            (406, 179),
-            (404, 153),
-            (389, 147),
-            (371, 151),
-            (343, 161),
-            (307, 180),
-            (296, 206),
-            (296, 241),
-            (293, 323),
-            (283, 351),
-            (259, 349),
-            (236, 341),
-            (228, 327),
-            (227, 277),
-            (217, 271),
-            (167, 275),
-            (120, 331),
-            (87, 469),
-            (63, 484),
-            (44, 484),
-            (30, 477),
-            (19, 454),
-            (22, 428),
-            (35, 408),
-            (74, 340),
-            (102, 298),
-            (132, 263),
-            (167, 229),
-            (201, 188),
-            (237, 154),
-            (266, 138),
-            (293, 126),
-            (327, 121),
-            (347, 118),
-            (355, 108),
-            (355, 93),
-            (359, 79),
-            (373, 88),
-            (402, 107),
-            (427, 122),
-            (622, 238),
-            (784, 341),
-            (859, 382),
-            (863, 398),
-            (857, 406),
-            (844, 416),
-            (822, 416),
-            (742, 414),
-            (686, 409),
-            (654, 393),
-            (632, 381),
-            (605, 371),
-            (586, 374),
-            (569, 385),
-            (553, 403),
-            (542, 431),
-            (529, 458),
-            (511, 468),
-            (481, 470),
-            (415, 475),
             (403, 466),
+            (415, 475),
+            (481, 470),
+            (511, 468),
+            (529, 458),
+            (542, 431),
+            (553, 403),
+            (569, 385),
+            (586, 374),
+            (605, 371),
+            (632, 381),
+            (654, 393),
+            (686, 409),
+            (742, 414),
+            (822, 416),
+            (844, 416),
+            (857, 406),
+            (863, 398),
+            (859, 382),
+            (784, 341),
+            (622, 238),
+            (427, 122),
+            (402, 107),
+            (373, 88),
+            (359, 79),
+            (355, 93),
+            (355, 108),
+            (347, 118),
+            (327, 121),
+            (293, 126),
+            (266, 138),
+            (237, 154),
+            (201, 188),
+            (167, 229),
+            (132, 263),
+            (102, 298),
+            (74, 340),
+            (35, 408),
+            (22, 428),
+            (19, 454),
+            (30, 477),
+            (44, 484),
+            (63, 484),
+            (87, 469),
+            (120, 331),
+            (167, 275),
+            (217, 271),
+            (227, 277),
+            (228, 327),
+            (236, 341),
+            (259, 349),
+            (283, 351),
+            (293, 323),
+            (296, 241),
+            (296, 206),
+            (307, 180),
+            (343, 161),
+            (371, 151),
+            (389, 147),
+            (404, 153),
+            (406, 179),
             (406, 225),  # Vuelta al inicio
         ]
         return path
@@ -182,8 +183,8 @@ class F1RaceSim:
 
     def draw_car_rotated(self, car_image, x, y, angle):
         """Dibuja un auto rotado según el ángulo de la pista"""
-        # Rotar la imagen
-        rotated = pygame.transform.rotate(car_image, -angle)
+        # Rotar la imagen (invertido para que mire hacia adelante)
+        rotated = pygame.transform.rotate(car_image, -angle + 180)
         # Mantener la transparencia
         rotated.set_colorkey((0, 0, 0))
         # Centrar la imagen rotada
@@ -237,8 +238,9 @@ class F1RaceSim:
                 rival_distance += r_speed
 
                 # Obtener posiciones en el circuito
-                norris_x, norris_y, norris_angle = self.get_position_on_track(norris_distance, y_offset=0)
-                rival_x, rival_y, rival_angle = self.get_position_on_track(rival_distance, y_offset=30)
+                # Offset reducido para mantener ambos autos dentro de la pista
+                norris_x, norris_y, norris_angle = self.get_position_on_track(norris_distance, y_offset=-8)
+                rival_x, rival_y, rival_angle = self.get_position_on_track(rival_distance, y_offset=8)
 
                 # Limpiar pantalla completamente
                 self.screen.fill((0, 0, 0))
