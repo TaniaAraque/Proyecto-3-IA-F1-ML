@@ -3,6 +3,7 @@ import numpy as np
 import time
 import random
 import os
+import math
 
 class F1RaceSim:
     def __init__(self, env, Q, episodes=200):
@@ -30,9 +31,132 @@ class F1RaceSim:
 
         self.car_norris = pygame.image.load("assets/car_norris.png")
         self.car_norris = pygame.transform.scale(self.car_norris, (70, 40))
+        self.car_norris.set_colorkey((0, 0, 0))  # Hacer transparente el negro
 
         self.car_rival = pygame.image.load("assets/car_rival.png")
         self.car_rival = pygame.transform.scale(self.car_rival, (70, 40))
+        self.car_rival.set_colorkey((0, 0, 0))  # Hacer transparente el negro
+
+        # Definir trayectoria del circuito (ajusta estos puntos según tu imagen)
+        self.track_path = self.create_track_path()
+        self.total_distance = self.calculate_path_length()
+
+    def create_track_path(self):
+        """
+        Define los puntos que forman la trayectoria del circuito.
+        Waypoints mapeados desde la imagen real del circuito.
+        """
+        path = [
+            (406, 225),
+            (406, 179),
+            (404, 153),
+            (389, 147),
+            (371, 151),
+            (343, 161),
+            (307, 180),
+            (296, 206),
+            (296, 241),
+            (293, 323),
+            (283, 351),
+            (259, 349),
+            (236, 341),
+            (228, 327),
+            (227, 277),
+            (217, 271),
+            (167, 275),
+            (120, 331),
+            (87, 469),
+            (63, 484),
+            (44, 484),
+            (30, 477),
+            (19, 454),
+            (22, 428),
+            (35, 408),
+            (74, 340),
+            (102, 298),
+            (132, 263),
+            (167, 229),
+            (201, 188),
+            (237, 154),
+            (266, 138),
+            (293, 126),
+            (327, 121),
+            (347, 118),
+            (355, 108),
+            (355, 93),
+            (359, 79),
+            (373, 88),
+            (402, 107),
+            (427, 122),
+            (622, 238),
+            (784, 341),
+            (859, 382),
+            (863, 398),
+            (857, 406),
+            (844, 416),
+            (822, 416),
+            (742, 414),
+            (686, 409),
+            (654, 393),
+            (632, 381),
+            (605, 371),
+            (586, 374),
+            (569, 385),
+            (553, 403),
+            (542, 431),
+            (529, 458),
+            (511, 468),
+            (481, 470),
+            (415, 475),
+            (403, 466),
+            (406, 225),  # Vuelta al inicio
+        ]
+        return path
+
+    def calculate_path_length(self):
+        """Calcula la longitud total del circuito"""
+        total = 0
+        for i in range(len(self.track_path) - 1):
+            x1, y1 = self.track_path[i]
+            x2, y2 = self.track_path[i + 1]
+            total += math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+        return total
+
+    def get_position_on_track(self, distance, y_offset=0):
+        """
+        Obtiene la posición (x, y) y ángulo en el circuito dada una distancia recorrida.
+        y_offset permite colocar autos en diferentes carriles.
+        """
+        # Normalizar distancia
+        distance = distance % self.total_distance
+        
+        # Encontrar segmento del circuito
+        accumulated = 0
+        for i in range(len(self.track_path) - 1):
+            x1, y1 = self.track_path[i]
+            x2, y2 = self.track_path[i + 1]
+            segment_length = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+            
+            if accumulated + segment_length >= distance:
+                # Interpolación en este segmento
+                t = (distance - accumulated) / segment_length
+                x = x1 + t * (x2 - x1)
+                y = y1 + t * (y2 - y1)
+                
+                # Calcular ángulo de la tangente
+                angle = math.atan2(y2 - y1, x2 - x1)
+                
+                # Aplicar offset perpendicular (para diferentes carriles)
+                x += y_offset * math.sin(angle)
+                y -= y_offset * math.cos(angle)
+                
+                return x, y, math.degrees(angle)
+            
+            accumulated += segment_length
+        
+        # Si llegamos aquí, estamos al final
+        x, y = self.track_path[-1]
+        return x, y, 0
 
     def draw_panel(self, state, action_name, ep):
         panel_x = 910
@@ -56,10 +180,20 @@ class F1RaceSim:
                 txt = self.small.render(f"{val:.2f}", True, self.black)
                 self.screen.blit(txt, (rect.x + 10, rect.y + 10))
 
+    def draw_car_rotated(self, car_image, x, y, angle):
+        """Dibuja un auto rotado según el ángulo de la pista"""
+        # Rotar la imagen
+        rotated = pygame.transform.rotate(car_image, -angle)
+        # Mantener la transparencia
+        rotated.set_colorkey((0, 0, 0))
+        # Centrar la imagen rotada
+        rect = rotated.get_rect(center=(int(x), int(y)))
+        self.screen.blit(rotated, rect)
+
+
     def run(self):
         alpha = 0.1
         eps = 0.2
-        finish_x = 800 
 
         for ep in range(self.episodes):
 
@@ -68,11 +202,9 @@ class F1RaceSim:
                     pygame.quit()
                     return
 
-            norris_x = 100
-            norris_y = 250
-
-            rival_x = 100
-            rival_y = 330
+            # Distancia recorrida en el circuito (en lugar de posición x)
+            norris_distance = 0
+            rival_distance = 0
 
             state = self.env.reset()
             action = np.random.randint(3) if random.random() < eps else np.argmax(self.Q[state])
@@ -92,31 +224,42 @@ class F1RaceSim:
 
             reward = 0
 
-            while norris_x < finish_x and rival_x < finish_x:
+            # Carrera: una vuelta completa al circuito
+            while norris_distance < self.total_distance and rival_distance < self.total_distance:
 
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         pygame.quit()
                         return
 
-                norris_x += n_speed
-                rival_x += r_speed
+                # Avanzar en el circuito
+                norris_distance += n_speed
+                rival_distance += r_speed
 
+                # Obtener posiciones en el circuito
+                norris_x, norris_y, norris_angle = self.get_position_on_track(norris_distance, y_offset=0)
+                rival_x, rival_y, rival_angle = self.get_position_on_track(rival_distance, y_offset=30)
+
+                # Limpiar pantalla completamente
+                self.screen.fill((0, 0, 0))
+                
+                # Dibujar fondo
                 self.screen.blit(self.track, (0,0))
 
-                self.screen.blit(self.car_norris, (norris_x, norris_y))
-                self.screen.blit(self.car_rival, (rival_x, rival_y))
-
-                pygame.draw.line(self.screen, self.black, (finish_x, 200),(finish_x, 400),3)
+                # Dibujar autos rotados según la curva del circuito
+                self.draw_car_rotated(self.car_norris, norris_x, norris_y, norris_angle)
+                self.draw_car_rotated(self.car_rival, rival_x, rival_y, rival_angle)
 
                 self.draw_panel(state, action_name, ep)
 
                 pygame.display.update()
                 time.sleep(0.02)
 
-            if norris_x >= finish_x and norris_x > rival_x:
+            # Determinar ganador
+            if norris_distance >= self.total_distance and norris_distance < rival_distance + n_speed:
                 reward = 1
 
             self.Q[state, action] += alpha * (reward - self.Q[state, action])
 
         pygame.quit()
+
