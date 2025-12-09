@@ -28,12 +28,17 @@ def train_q_learning(env, episodes=10000,
             action = int(np.argmax(Q[state]))
 
         next_state, reward, done, info = env.step(action)
-        rewards_log.append(reward)
 
-        target = reward  
+        # Target: Recompensa inmediata + (Gamma * Valor futuro máximo)
+        target = reward
+
+        # Actualización de la Q-Table
         Q[state, action] += alpha * (target - Q[state, action])
 
+        # Decaimiento de Epsilon
         epsilon = max(epsilon_end, epsilon - eps_decay)
+
+        rewards_log.append(reward)
         
         # Imprimir progreso cada cierto número de episodios
         if (ep + 1) % 500 == 0:

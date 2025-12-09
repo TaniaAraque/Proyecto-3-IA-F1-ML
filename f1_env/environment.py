@@ -19,6 +19,13 @@ class F1NorrisEnv:
     def reset(self):
         self.state = random.choice([0, 1, 2])
         return self.state
+    
+    def _get_finish_sample(self, dist):
+        # Extraer positions (population) y probabilidades (weights)
+        positions = [item[0] for item in dist]
+        weights = [item[1] for item in dist]
+        
+        return random.choices(positions, weights=weights, k=1)[0]
 
 
     def sample_finish_norris(self, state, action):
@@ -44,13 +51,14 @@ class F1NorrisEnv:
             else:
                 dist = [(1, 0.25), (2, 0.20), (3, 0.20), (5, 0.15), (20, 0.20)]
 
-        r = random.random()
-        acum = 0
-        for pos, p in dist:
-            acum += p
-            if r <= acum:
-                return pos
-        return dist[-1][0]
+        #r = random.random()
+        #acum = 0
+        #for pos, p in dist:
+        #    acum += p
+        #    if r <= acum:
+        #        return pos
+        #return dist[-1][0]
+        return self._get_finish_sample(dist)
 
     def sample_finish_rival(self, driver_name):
         if driver_name == "Verstappen":
@@ -58,13 +66,14 @@ class F1NorrisEnv:
         else:
             dist = [(1, 0.30), (2, 0.25), (3, 0.20), (4, 0.10), (5, 0.10), (10, 0.05)]
 
-        r = random.random()
-        acum = 0
-        for pos, p in dist:
-            acum += p
-            if r <= acum:
-                return pos
-        return dist[-1][0]
+        #r = random.random()
+        #acum = 0
+        #for pos, p in dist:
+        #    acum += p
+        #    if r <= acum:
+        #        return pos
+        #return dist[-1][0]
+        return self._get_finish_sample(dist)
 
     def points_for_position(self, pos):
         return self.points_table.get(pos, 0)
@@ -76,15 +85,33 @@ class F1NorrisEnv:
         pos_v = self.sample_finish_rival("Verstappen")
         pos_p = self.sample_finish_rival("Piastri")
 
-        pts_n = self.base_points["Norris"] + self.points_for_position(pos_n)
-        pts_v = self.base_points["Verstappen"] + self.points_for_position(pos_v)
-        pts_p = self.base_points["Piastri"] + self.points_for_position(pos_p)
+        # Puntos ganados en la carrera.
+        pts_n_carrera = self.points_for_position(pos_n)
+        pts_v_carrera = self.points_for_position(pos_v)
+        pts_p_carrera = self.points_for_position(pos_p)
 
+        # ------------------------------------------------------------------------------------------------------------------------------
+        # ESTRATEGIA CORTO PLAZO: MAXIMIZAR LA CARRERA.
+        #max_carrera = max(pts_n_carrera, pts_v_carrera, pts_p_carrera)
+        #reward = 1 if (pts_n_carrera == max_carrera and pts_n_carrera > pts_v_carrera and pts_n_carrera > pts_p_carrera) else 0
+        #--------------------------------------------------------------------------------------------------------------------------------
+
+        # TOTAL FINAL del Campeonato.
+        pts_n = self.base_points["Norris"] + pts_n_carrera
+        pts_v = self.base_points["Verstappen"] + pts_v_carrera
+        pts_p = self.base_points["Piastri"] + pts_p_carrera
+
+
+        #ESTRATEGIA LARGO PLAZO: ASEGURAR EL CAMPEONATO.
         max_pts = max(pts_n, pts_v, pts_p)
-
+        # Global. Puntos iniciales y puntos ganados.
         reward = 1 if (pts_n == max_pts and pts_n > pts_v and pts_n > pts_p) else 0
 
-        return None, reward, True, {
+        next_state = state
+        done = True
+
+        # LARGO PLAZO
+        return next_state, reward, done, {
             "pos_norris": pos_n,
             "pos_ver": pos_v,
             "pos_pias": pos_p,
@@ -92,3 +119,13 @@ class F1NorrisEnv:
             "pts_ver": pts_v,
             "pts_pias": pts_p,
         }
+
+
+        #return next_state, reward, done, {
+        #    "pos_norris": pos_n,
+        #    "pos_ver": pos_v,
+        #    "pos_pias": pos_p,
+        #    "pts_norris": pts_n_carrera,
+        #    "pts_ver": pts_v_carrera,
+        #    "pts_pias": pts_p_carrera,
+        #}
