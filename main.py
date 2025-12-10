@@ -21,8 +21,8 @@ if __name__ == "__main__":
 
     # Descomentar para ejecutar la simulación animada de la carrera
 
-    print("Iniciando simulación animada de carrera...")
-    sim = F1RaceSim(env, Q, episodes=500)
-    sim.run()
+    #print("Iniciando simulación animada de carrera...")
+    #sim = F1RaceSim(env, Q, episodes=500)
+    #sim.run() 
     
     print("Entrenamiento completado. Gráficas guardadas en /results")

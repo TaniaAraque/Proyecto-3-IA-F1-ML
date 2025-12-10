@@ -53,5 +53,27 @@ def train_q_learning(env, episodes=10000,
     print(f"Victorias totales: {total_wins}/{episodes} ({total_win_rate:.2f}%)")
     print(f"Q-table final:\n{Q}")
     print("-" * 60)
+    
+    # Mostrar política óptima aprendida
+    print("\n🏆 🏎️  ESTRATEGIA ÓPTIMA APRENDIDA:")
+    print("=" * 60)
+    
+    estados = ["Pole Position", "P2-P3", "P4-P6"]
+    acciones = ["Conservadora", "Normal", "Agresiva"]
+    emojis = ["🥇", "🥈", "🥉"]
+    
+    for i, (estado, emoji) in enumerate(zip(estados, emojis)):
+        best_action = np.argmax(Q[i])
+        best_value = Q[i, best_action]
+        win_probability = best_value * 100
+        
+        print(f"{emoji} Desde {estado}:")
+        print(f"   → Estrategia: {acciones[best_action]}")
+        print(f"   → Probabilidad de victoria: {win_probability:.2f}%")
+        print(f"   → Q-values: Cons={Q[i,0]:.3f}, Norm={Q[i,1]:.3f}, Agre={Q[i,2]:.3f}")
+        print()
+    
+    print("=" * 60)
 
     return Q, rewards_log
+

@@ -8,7 +8,6 @@ import sys
 def get_track_waypoints():
     pygame.init()
     
-    # Cargar la imagen del circuito
     track_img = pygame.image.load("assets/track.png")
     track_img = pygame.transform.scale(track_img, (900, 600))
     
@@ -26,30 +25,30 @@ def get_track_waypoints():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
-                elif event.key == pygame.K_u and waypoints:  # U para deshacer último punto
+                elif event.key == pygame.K_u and waypoints:  
                     waypoints.pop()
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                # Agregar waypoint
+
                 pos = pygame.mouse.get_pos()
                 waypoints.append(pos)
                 print(f"Punto {len(waypoints)}: {pos}")
         
-        # Dibujar
+
         screen.blit(track_img, (0, 0))
         
-        # Dibujar waypoints y líneas
+
         if len(waypoints) > 0:
             for i, point in enumerate(waypoints):
                 pygame.draw.circle(screen, (255, 0, 0), point, 5)
-                # Número del punto
+
                 text = font.render(str(i+1), True, (255, 255, 255))
                 screen.blit(text, (point[0] + 8, point[1] - 8))
             
-            # Líneas conectando waypoints
+
             if len(waypoints) > 1:
                 pygame.draw.lines(screen, (0, 255, 0), False, waypoints, 2)
         
-        # Instrucciones
+
         instructions = [
             "Haz clic para agregar puntos siguiendo el circuito",
             f"Puntos marcados: {len(waypoints)}",
@@ -67,7 +66,7 @@ def get_track_waypoints():
     
     pygame.quit()
     
-    # Imprimir el código para copiar
+
     if waypoints:
         print("\n" + "="*60)
         print("COPIA ESTE CÓDIGO EN create_track_path():")
